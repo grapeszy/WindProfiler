@@ -1,0 +1,95 @@
+########################################################################
+
+library(stats)
+library(grid)
+library(plyr)
+library(ggplot2)
+
+
+########################################################################
+#
+# Constants.
+#
+########################################################################
+
+
+########################################################################
+#
+# load data
+#
+########################################################################
+load("../data//o-g-stninfo.RData")
+
+
+ind <- d$obstype == "LC"
+
+########################################################################
+# plot the hist
+
+
+#png("../figures/HgtDis.png",
+#    width = 752, height = 533, units = "px", pointsize = 12,bg = "white")
+
+par(mfcol=c(1,2))
+
+br <- seq(0,(length(d$shgt[ind])/100)*15,by=(length(d$shgt[ind])/100)*3)
+xr <- seq(0,15,by=1)
+yr <- seq(0,11000,by=2750)
+hist(d$shgt[ind]/1000,breaks=30,xlim=c(0,15),ylim=c(0,11346),xlab=NULL,ylab=NULL,
+     main=NULL,axes=F,cex.axis=0.8,font.lab=2)
+axis(1,at=xr,labels=xr)
+axis(4,at=yr,labels=yr,cex=0.1)
+axis(2,at=br,labels=c('0%','3%','6%','9%','12%','15%'))
+text(15,6000,'Frequency',srt=90,font=2)
+#text(-3.5,6000,'Density',srt=90,font=2)
+#text(7,-2000,'Obs Height [km]',font=2)
+#text(0,11346,'(a)',font=2)
+
+
+d1<-d[sample(nrow(d),1000),]
+
+psp<-ggplot(d,aes(diffsp,shgt/1000))
+pdir<-ggplot(d,aes(diffdir,shgt/1000))
+figsp<-psp+stat_density2d(aes(fill = ..level..), geom="polygon") +
+  coord_cartesian(xlim=c(-5,5),ylim=c(0,7))+
+  scale_fill_continuous("Density",high='red2',low='blue4',limits=c(0,0.05),breaks=c(0.01,0.02,0.03,0.04),labels=c("1%","2%","3%","4%"))+
+  scale_x_continuous("Wind Speed Bias [m/s]")+
+  scale_y_continuous("Obs Height [km]") +
+#  geom_text(data = NULL, x = -4, y =6.5, label = "(b)",font=2,size=6) +
+  theme(axis.title.x = element_text(size=16,colour = "black",face = "bold"),
+        axis.title.y = element_text(size=16,colour = "black",face = "bold"),
+        axis.text.x = element_text(size=16),
+        axis.text.y = element_text(size=16))
+
+figdir<-pdir+stat_density2d(aes(fill = ..level..), geom="polygon") +
+  coord_cartesian(xlim=c(-50,50),ylim=c(0,7))+
+  scale_fill_continuous("Density",high='red2',low='blue4',limits=c(0,0.01),breaks=c(0.001,0.004,0.007,0.01),labels=c("0.1%","0.4%","0.7%","1%"))+
+  scale_x_continuous("Wind Speed Bias [m/s]")+
+  scale_y_continuous("Obs Height [km]") +
+  #  geom_text(data = NULL, x = -4, y =6.5, label = "(b)",font=2,size=6) +
+  theme(axis.title.x = element_text(size=16,colour = "black",face = "bold"),
+        axis.title.y = element_text(size=16,colour = "black",face = "bold"),
+        axis.text.x = element_text(size=16),
+        axis.text.y = element_text(size=16))
+
+
+
+#vp.Left <- viewport(height=unit(0.5, "npc"), width=unit(0.5, "npc"), 
+#                    just="toptight", y=0.5, x=0.5)
+pushViewport(viewport(layout=grid.layout(2,2)))
+
+vplayout <- function(x,y)
+  viewport(layout.pos.row=x,layout.pos.col=y)
+#print(figall,vp=vplayout(1:2,1))
+print(figsp,vp=vplayout(1,2))
+print(figdir,vp=vplayout(2,2))
+
+
+
+text(-3.5,6000,'Density',srt=90,font=2)
+text(7,-2000,'Obs Height [km]',font=2)
+text(0,12000,'(a)',font=2)
+text(22,12000,'(b)',font=2)
+
+#dev.off()
+ind<-(d1$diffdir<=10)&(d1$shgt/1000<=2)
